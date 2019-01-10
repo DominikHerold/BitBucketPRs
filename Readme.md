@@ -9,3 +9,4 @@ Following properties must be set:
 * `Cookie`
 * `Host`
 * `ProjectKey`
+* `UserName`

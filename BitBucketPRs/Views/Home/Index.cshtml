@@ -8,7 +8,7 @@
         @foreach (var pr in Model.Prs)
         {
             <div>
-                <a href=@pr.Link>@pr.Name</a>
+                <a href=@pr.Link>@pr.Name</a>@if (pr.AlreadyApproved) { <span>&nbsp;✔</span> }
             </div>
         }
     </div>

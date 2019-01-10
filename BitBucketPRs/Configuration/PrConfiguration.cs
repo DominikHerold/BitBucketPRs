@@ -7,5 +7,7 @@
         public string Host { get; set; }
 
         public string ProjectKey { get; set; }
+
+        public string UserName { get; set; }
     }
 }

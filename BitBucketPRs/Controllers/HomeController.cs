@@ -37,7 +37,12 @@ namespace BitBucketPRs.Controllers
                 var repo = JsonConvert.DeserializeObject<RootObject>(repoResult);
 
                 foreach (var valueSlug in repo.Values)
-                    prOverView.Prs.Add(new PrOverview { Link = valueSlug.Links.Self.First().Href, Name = string.IsNullOrWhiteSpace(valueSlug.Title) ? "foo" : valueSlug.Title });
+                {
+                    var reviewers = valueSlug.Reviewers;
+                    var approved = reviewers != null && reviewers.Any(r => r.Approved && r.User.Name == _configuration.UserName);
+                    prOverView.Prs.Add(
+                        new PrOverview { Link = valueSlug.Links.Self.First().Href, Name = string.IsNullOrWhiteSpace(valueSlug.Title) ? "foo" : valueSlug.Title, AlreadyApproved = approved });
+                }
             }
 
             return View(prOverView);
