@@ -1,0 +1,15 @@
+﻿@model PrOverviews
+
+<meta http-equiv="refresh" content="600">
+
+@if (Model.Prs.Count > 0)
+{
+    <div>
+        @foreach (var pr in Model.Prs)
+        {
+            <div>
+                <a href=@pr.Link>@pr.Name</a>
+            </div>
+        }
+    </div>
+}
