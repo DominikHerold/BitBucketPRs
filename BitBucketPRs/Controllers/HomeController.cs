@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -28,7 +29,7 @@ namespace BitBucketPRs.Controllers
             var reposResult = await GetContent($"https://{_configuration.Host}/rest/api/latest/projects/{_configuration.ProjectKey}/repos/");
             var repos = JsonConvert.DeserializeObject<RootObject>(reposResult);
 
-            var prOverView = new PrOverviews { Prs = new List<PrOverview>() };
+            var prOverView = new PrOverviews { Prs = new List<PrOverview>(), LastUpdated = DateTime.Now };
             foreach (var value in repos.Values)
             {
                 var slug = value.Slug;
