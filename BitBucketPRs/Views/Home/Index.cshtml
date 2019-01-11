@@ -1,6 +1,24 @@
 ﻿@model PrOverviews
 
 <meta http-equiv="refresh" content="600">
+<script type="text/javascript">
+    window.onfocus = function () {
+        $.get('/Home/Focus', function(data, status) { console.log(status) });
+    }
+</script>
+
+<script type="text/javascript">
+    window.onblur = function () {
+        $.get('/Home/Blur', function (data, status) { console.log(status) });
+    }
+</script>
+
+@if (Model.NewPrs)
+{
+    <script type="text/javascript">
+        document.title = "🔴"
+    </script>
+}
 
 @if (Model.Prs.Count > 0)
 {

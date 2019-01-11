@@ -8,5 +8,7 @@ namespace BitBucketPRs.Models
         public List<PrOverview> Prs { get; set; }
 
         public DateTime LastUpdated { get; set; }
+
+        public bool NewPrs { get; set; }
     }
 }

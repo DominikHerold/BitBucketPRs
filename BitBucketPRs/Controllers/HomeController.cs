@@ -18,6 +18,11 @@ namespace BitBucketPRs.Controllers
     public class HomeController : Controller
     {
         private readonly PrConfiguration _configuration;
+        private static bool Focused = true;
+
+        private static readonly HashSet<string> Prs = new HashSet<string>();
+
+        private static bool NewPrs;
 
         public HomeController(IOptions<PrConfiguration> options)
         {
@@ -39,13 +44,33 @@ namespace BitBucketPRs.Controllers
                 foreach (var valueSlug in repo.Values)
                 {
                     var reviewers = valueSlug.Reviewers;
+                    var link = valueSlug.Links.Self.First().Href;
                     var approved = reviewers != null && reviewers.Any(r => r.Approved && r.User.Name == _configuration.UserName);
-                    prOverView.Prs.Add(
-                        new PrOverview { Link = valueSlug.Links.Self.First().Href, Name = string.IsNullOrWhiteSpace(valueSlug.Title) ? "foo" : valueSlug.Title, AlreadyApproved = approved });
+                    prOverView.Prs.Add(new PrOverview { Link = link, Name = string.IsNullOrWhiteSpace(valueSlug.Title) ? "foo" : valueSlug.Title, AlreadyApproved = approved });
+                    if ((!Prs.Add(link) || Focused) && !NewPrs)
+                        continue;
+
+                    prOverView.NewPrs = true;
+                    NewPrs = true;
                 }
             }
 
             return View(prOverView);
+        }
+
+        public IActionResult Focus()
+        {
+            Focused = true;
+            NewPrs = false;
+
+            return new OkResult();
+        }
+
+        public IActionResult Blur()
+        {
+            Focused = false;
+
+            return new OkResult();
         }
 
         private async Task<string> GetContent(string address)
