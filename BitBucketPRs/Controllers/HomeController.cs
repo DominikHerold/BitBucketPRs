@@ -23,10 +23,12 @@ namespace BitBucketPRs.Controllers
         private static readonly HashSet<string> Prs = new HashSet<string>();
 
         private static bool NewPrs;
+        private string _cookie;
 
         public HomeController(IOptions<PrConfiguration> options)
         {
             _configuration = options.Value;
+            _cookie = _configuration.Cookie;
         }
 
         public async Task<IActionResult> Index()
@@ -77,8 +79,23 @@ namespace BitBucketPRs.Controllers
         {
             using (var webClient = new HttpClient())
             {
-                webClient.DefaultRequestHeaders.Add(nameof(PrConfiguration.Cookie), _configuration.Cookie);
+                webClient.DefaultRequestHeaders.Add(nameof(PrConfiguration.Cookie), _cookie);
                 var response = await webClient.GetAsync(address);
+
+                var isSetCookie = response.Headers.TryGetValues("Set-Cookie", out var setCookies);
+                if (isSetCookie && setCookies != null)
+                {
+                    foreach (var setCookie in setCookies)
+                    {
+                        if (!setCookie.StartsWith("BITBUCKETSESSIONID=", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
+                        var endIndex = setCookie.IndexOf(';');
+                        var newCookie = setCookie.Substring(0, endIndex);
+                        _cookie = newCookie;
+                    }
+                }
+
                 var content = await response.Content.ReadAsStringAsync();
 
                 return content;
