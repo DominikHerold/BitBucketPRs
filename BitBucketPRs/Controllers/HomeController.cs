@@ -79,8 +79,7 @@ namespace BitBucketPRs.Controllers
         {
             using (var webClient = new HttpClient())
             {
-                webClient.DefaultRequestHeaders.Add(nameof(PrConfiguration.Cookie), _cookie);
-                var response = await webClient.GetAsync(address);
+                var response = await GetResponse(webClient, address);
 
                 var isSetCookie = response.Headers.TryGetValues("Set-Cookie", out var setCookies);
                 if (isSetCookie && setCookies != null)
@@ -93,6 +92,9 @@ namespace BitBucketPRs.Controllers
                         var endIndex = setCookie.IndexOf(';');
                         var newCookie = setCookie.Substring(0, endIndex);
                         _cookie = newCookie;
+                        webClient.DefaultRequestHeaders.Clear();
+                        response = await GetResponse(webClient, address);
+                        break;
                     }
                 }
 
@@ -100,6 +102,14 @@ namespace BitBucketPRs.Controllers
 
                 return content;
             }
+        }
+
+        private async Task<HttpResponseMessage> GetResponse(HttpClient webClient, string address)
+        {
+            webClient.DefaultRequestHeaders.Add(nameof(PrConfiguration.Cookie), _cookie);
+            var response = await webClient.GetAsync(address);
+
+            return response;
         }
     }
 }
