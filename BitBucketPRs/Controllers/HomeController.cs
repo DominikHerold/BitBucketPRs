@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 
 using BitBucketPRs.Configuration;
@@ -23,12 +25,12 @@ namespace BitBucketPRs.Controllers
         private static readonly HashSet<string> Prs = new HashSet<string>();
 
         private static bool NewPrs;
-        private string _cookie;
+
+        private static string Cookie = "foo=bar";
 
         public HomeController(IOptions<PrConfiguration> options)
         {
             _configuration = options.Value;
-            _cookie = _configuration.Cookie;
         }
 
         public async Task<IActionResult> Index()
@@ -79,37 +81,48 @@ namespace BitBucketPRs.Controllers
         {
             using (var webClient = new HttpClient())
             {
-                var response = await GetResponse(webClient, address);
-
-                var isSetCookie = response.Headers.TryGetValues("Set-Cookie", out var setCookies);
-                if (isSetCookie && setCookies != null)
+                var retry = 0;
+                HttpResponseMessage response;
+                do
                 {
-                    foreach (var setCookie in setCookies)
-                    {
-                        if (!setCookie.StartsWith("BITBUCKETSESSIONID=", StringComparison.OrdinalIgnoreCase))
-                            continue;
+                    retry++;
+                    if (retry == 3)
+                        throw new Exception("Can not authenticate");
 
-                        var endIndex = setCookie.IndexOf(';');
-                        var newCookie = setCookie.Substring(0, endIndex);
-                        _cookie = newCookie;
-                        webClient.DefaultRequestHeaders.Clear();
-                        response = await GetResponse(webClient, address);
-                        break;
-                    }
+                    webClient.DefaultRequestHeaders.Clear();
+                    webClient.DefaultRequestHeaders.Add(nameof(Cookie), Cookie);
+                    response = await webClient.GetAsync(address);
                 }
+                while (response.StatusCode == HttpStatusCode.Unauthorized && await Authenticate());
 
                 var content = await response.Content.ReadAsStringAsync();
-
                 return content;
             }
         }
 
-        private async Task<HttpResponseMessage> GetResponse(HttpClient webClient, string address)
+        private async Task<bool> Authenticate()
         {
-            webClient.DefaultRequestHeaders.Add(nameof(PrConfiguration.Cookie), _cookie);
-            var response = await webClient.GetAsync(address);
+            var handler = new HttpClientHandler { AllowAutoRedirect = false };
+            var client = new HttpClient(handler);
+            var toSend =
+                $"j_username={WebUtility.UrlEncode(_configuration.UserName)}&j_password={WebUtility.UrlEncode(_configuration.Password)}&_atl_remember_me=on&queryString=nextUrl%3D%252Fdashboard&submit=Anmelden";
+            var response = await client.PostAsync($"https://{_configuration.Host}/j_atl_security_check", new StringContent(toSend, Encoding.UTF8, "application/x-www-form-urlencoded"));
+            var isSetCookie = response.Headers.TryGetValues("Set-Cookie", out var setCookies);
+            if (!isSetCookie || setCookies == null)
+                return true;
 
-            return response;
+            foreach (var setCookie in setCookies)
+            {
+                if (!setCookie.StartsWith("BITBUCKETSESSIONID=", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var endIndex = setCookie.IndexOf(';');
+                var newCookie = setCookie.Substring(0, endIndex);
+                Cookie = newCookie;
+                return true;
+            }
+
+            return true;
         }
     }
 }
