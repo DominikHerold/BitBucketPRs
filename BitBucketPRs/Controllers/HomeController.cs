@@ -35,14 +35,14 @@ namespace BitBucketPRs.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var reposResult = await GetContent($"https://{_configuration.Host}/rest/api/latest/projects/{_configuration.ProjectKey}/repos/");
+            var reposResult = await GetContent($"https://{_configuration.Host}/rest/api/latest/projects/{_configuration.ProjectKey}/repos?limit=1000");
             var repos = JsonConvert.DeserializeObject<RootObject>(reposResult);
 
             var prOverView = new PrOverviews { Prs = new List<PrOverview>(), LastUpdated = DateTime.Now };
             foreach (var value in repos.Values)
             {
                 var slug = value.Slug;
-                var repoResult = await GetContent($"https://{_configuration.Host}/rest/api/latest/projects/{_configuration.ProjectKey}/repos/{slug}/pull-requests");
+                var repoResult = await GetContent($"https://{_configuration.Host}/rest/api/latest/projects/{_configuration.ProjectKey}/repos/{slug}/pull-requests?limit=1000");
                 var repo = JsonConvert.DeserializeObject<RootObject>(repoResult);
 
                 foreach (var valueSlug in repo.Values)
