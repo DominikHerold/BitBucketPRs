@@ -49,6 +49,9 @@ namespace BitBucketPRs.Controllers
                 {
                     var reviewers = valueSlug.Reviewers;
                     var link = valueSlug.Links.Self.First().Href;
+                    if (_configuration.BlockedLinks.Contains(link))
+                        continue;
+
                     var approved = reviewers != null && reviewers.Any(r => r.Approved && r.User.Name == _configuration.UserName);
                     prOverView.Prs.Add(new PrOverview { Link = link, Name = string.IsNullOrWhiteSpace(valueSlug.Title) ? "foo" : valueSlug.Title, AlreadyApproved = approved });
                     if ((!Prs.Add(link) || Focused) && !NewPrs)
