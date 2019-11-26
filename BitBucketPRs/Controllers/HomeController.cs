@@ -11,6 +11,7 @@ using BitBucketPRs.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using BitBucketPRs.Models;
 
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.Options;
 
 using Newtonsoft.Json;
@@ -65,6 +66,12 @@ namespace BitBucketPRs.Controllers
             return View(prOverView);
         }
 
+        public IActionResult Error()
+        {
+            var context = HttpContext.Features.Get<IExceptionHandlerFeature>();
+            return View(context);
+        }
+
         public IActionResult Focus()
         {
             Focused = true;
@@ -90,7 +97,7 @@ namespace BitBucketPRs.Controllers
                 {
                     retry++;
                     if (retry == 3)
-                        throw new Exception("Can not authenticate");
+                        throw new InvalidOperationException("Can not authenticate");
 
                     webClient.DefaultRequestHeaders.Clear();
                     webClient.DefaultRequestHeaders.Add(nameof(Cookie), Cookie);
